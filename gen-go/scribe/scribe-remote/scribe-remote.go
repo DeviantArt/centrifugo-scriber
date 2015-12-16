@@ -14,7 +14,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/apache/thrift/lib/go/thrift"
+	"github.com/DeviantArt/centrifugo-scriber/Godeps/_workspace/src/github.com/apache/thrift/lib/go/thrift"
 )
 
 func Usage() {

@@ -7,7 +7,7 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/apache/thrift/lib/go/thrift"
+	"github.com/DeviantArt/centrifugo-scriber/Godeps/_workspace/src/github.com/apache/thrift/lib/go/thrift"
 )
 
 // (needed to ensure safety because of naive import list construction.)

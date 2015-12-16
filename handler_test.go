@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/DeviantArt/centrifugo-scriber/Godeps/_workspace/src/github.com/quipo/statsd"
 	scribe "github.com/DeviantArt/centrifugo-scriber/gen-go/scribe"
-	"github.com/quipo/statsd"
 )
 
 func TestParsingScribeMessages(t *testing.T) {

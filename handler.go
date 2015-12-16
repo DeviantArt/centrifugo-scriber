@@ -6,9 +6,9 @@ import (
 
 	scribe "github.com/DeviantArt/centrifugo-scriber/gen-go/scribe"
 
-	"github.com/golang/glog"
-	"github.com/quipo/statsd"
-	"gopkg.in/redis.v3"
+	"github.com/DeviantArt/centrifugo-scriber/Godeps/_workspace/src/github.com/golang/glog"
+	"github.com/DeviantArt/centrifugo-scriber/Godeps/_workspace/src/github.com/quipo/statsd"
+	"github.com/DeviantArt/centrifugo-scriber/Godeps/_workspace/src/gopkg.in/redis.v3"
 )
 
 // Handler Implements scribe.Scribe

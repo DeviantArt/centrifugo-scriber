@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/DeviantArt/centrifugo-scriber/Godeps/_workspace/src/github.com/quipo/statsd"
 	scribe "github.com/DeviantArt/centrifugo-scriber/gen-go/scribe"
-	"github.com/quipo/statsd"
 
-	"github.com/apache/thrift/lib/go/thrift"
+	"github.com/DeviantArt/centrifugo-scriber/Godeps/_workspace/src/github.com/apache/thrift/lib/go/thrift"
 )
 
 func main() {
