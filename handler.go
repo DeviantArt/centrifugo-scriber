@@ -18,7 +18,7 @@ type Handler struct {
 	sd          statsd.Statsd
 }
 
-func NewHandler(redisAddr string, redisDB int, apiKey string, sd statsd.Statsd) (*Handler, error) {
+func NewHandler(redisAddr string, redisDB, redisIdleTimeout int, apiKey string, sd statsd.Statsd) (*Handler, error) {
 	h := &Handler{
 		apiKey: apiKey,
 		sd:     sd,
@@ -29,6 +29,8 @@ func NewHandler(redisAddr string, redisDB int, apiKey string, sd statsd.Statsd) 
 		DialTimeout:  1 * time.Second,
 		ReadTimeout:  1 * time.Second,
 		WriteTimeout: 1 * time.Second,
+		IdleTimeout:  time.Duration(redisIdleTimeout) * time.Second,
+		MaxRetries:   3,
 	})
 	return h, nil
 }

@@ -13,7 +13,7 @@ import (
 
 func main() {
 	var addr, redisAddr, apiKey, statsdHost, statsdPrefix string
-	var redisDB int
+	var redisDB, redisIdleTimeout int
 
 	flag.StringVar(&addr, "addr", "0.0.0.0:1463",
 		"The host:port to listen on")
@@ -21,6 +21,9 @@ func main() {
 		"localhost:6379", "The host:port to talk to redis on")
 	flag.IntVar(&redisDB, "redis-db", 0,
 		"Which redis DB to use")
+	flag.IntVar(&redisIdleTimeout, "redis-idle-timeout", 0,
+		"How many seconds a redis connection can be idle before we recycle it."+
+			"If you have `timeout` config in your redis server config set to a non-zero value, this should be set lower. default 0")
 	flag.StringVar(&apiKey, "centrifugo-api-key",
 		"centrifugo.api", "Which redis key the centrifugo API is looking in for publish queue")
 	flag.StringVar(&statsdHost, "statsd-host", "",
@@ -51,7 +54,7 @@ func main() {
 		panic(err)
 	}
 
-	handler, err := NewHandler(redisAddr, redisDB, apiKey, sd)
+	handler, err := NewHandler(redisAddr, redisDB, redisIdleTimeout, apiKey, sd)
 	if err != nil {
 		panic(err)
 	}
