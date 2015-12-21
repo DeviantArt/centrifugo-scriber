@@ -86,13 +86,14 @@ func (h *Handler) Log(messages []*scribe.LogEntry) (r scribe.ResultCode, err err
 
 	jsonStr := string(jsonBytes)
 
-	_, err = h.redisClient.RPush(h.apiKey, jsonStr).Result()
+	qSize, err := h.redisClient.RPush(h.apiKey, jsonStr).Result()
 	if err != nil {
 		glog.Errorf("Failed to push command to redis, downstream should retry. err: %s", err)
 		h.sd.Incr("error.redis_publish_fail_temp", 1)
 		return scribe.ResultCode_TRY_LATER, nil
 	}
 	h.sd.Incr("published", int64(len(req.Data)))
+	h.sd.Gauge("centrifugo.api.queue_length", qSize)
 
 	return scribe.ResultCode_OK, nil
 }
