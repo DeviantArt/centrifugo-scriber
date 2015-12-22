@@ -12,7 +12,7 @@ func TestParsingJSONMessage(t *testing.T) {
 	type testCase struct {
 		name          string
 		input         string
-		expectOut     *centrifugoPublishParams
+		expectOut     *centrifugoBroadcastParams
 		expectErr     bool
 		expectErrType reflect.Type
 	}
@@ -49,17 +49,17 @@ func TestParsingJSONMessage(t *testing.T) {
 		},
 		{
 			name:  "Correct format JSON - no TTL",
-			input: "{\"channel\":\"test\", \"data\":{\"foo\":\"bar\"}}",
-			expectOut: &centrifugoPublishParams{
-				Channel: "test",
-				Data:    json.RawMessage("{\"foo\":\"bar\"}"),
+			input: "{\"channels\":[\"test\"], \"data\":{\"foo\":\"bar\"}}",
+			expectOut: &centrifugoBroadcastParams{
+				Channels: []string{"test"},
+				Data:     json.RawMessage("{\"foo\":\"bar\"}"),
 			},
 			expectErr:     false,
 			expectErrType: nil,
 		},
 		{
 			name: "Correct format JSON - expired TTL",
-			input: fmt.Sprintf("{\"channel\":\"test\", \"data\":{\"ts\": %d, \"ttl\": 60, \"data\":{\"foo\":\"bar\"}}}",
+			input: fmt.Sprintf("{\"channels\":[\"test\"], \"data\":{\"ts\": %d, \"ttl\": 60, \"data\":{\"foo\":\"bar\"}}}",
 				now.Add(-1*time.Hour).Unix()),
 			expectOut:     nil,
 			expectErr:     true,
@@ -67,10 +67,10 @@ func TestParsingJSONMessage(t *testing.T) {
 		},
 		{
 			name: "Correct format JSON - Non expired TTL",
-			input: fmt.Sprintf("{\"channel\":\"test\", \"data\":{\"ts\": %d, \"ttl\": 60, \"data\":{\"foo\":\"bar\"}}}",
+			input: fmt.Sprintf("{\"channels\":[\"test\"], \"data\":{\"ts\": %d, \"ttl\": 60, \"data\":{\"foo\":\"bar\"}}}",
 				now.Add(-5*time.Second).Unix()),
-			expectOut: &centrifugoPublishParams{
-				Channel: "test",
+			expectOut: &centrifugoBroadcastParams{
+				Channels: []string{"test"},
 				Data: json.RawMessage(fmt.Sprintf("{\"ts\": %d, \"ttl\": 60, \"data\":{\"foo\":\"bar\"}}",
 					now.Add(-5*time.Second).Unix())),
 			},
@@ -79,10 +79,10 @@ func TestParsingJSONMessage(t *testing.T) {
 		},
 		{
 			name: "Correct format JSON - 0 TTL",
-			input: fmt.Sprintf("{\"channel\":\"test\", \"data\":{\"ts\": %d, \"ttl\": 0, \"data\":{\"foo\":\"bar\"}}}",
+			input: fmt.Sprintf("{\"channels\":[\"test\"], \"data\":{\"ts\": %d, \"ttl\": 0, \"data\":{\"foo\":\"bar\"}}}",
 				now.Unix()),
-			expectOut: &centrifugoPublishParams{
-				Channel: "test",
+			expectOut: &centrifugoBroadcastParams{
+				Channels: []string{"test"},
 				Data: json.RawMessage(fmt.Sprintf("{\"ts\": %d, \"ttl\": 0, \"data\":{\"foo\":\"bar\"}}",
 					now.Unix())),
 			},
@@ -109,8 +109,8 @@ func TestParsingJSONMessage(t *testing.T) {
 		}
 		if !reflect.DeepEqual(test.expectOut, out) {
 			t.Errorf("Failed case %s: expected output {%s, %s} got {%s, %s}",
-				test.name, test.expectOut.Channel, test.expectOut.Data,
-				out.Channel, out.Data)
+				test.name, test.expectOut.Channels, test.expectOut.Data,
+				out.Channels, out.Data)
 		}
 	}
 }

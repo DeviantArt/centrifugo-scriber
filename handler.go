@@ -35,9 +35,11 @@ func NewHandler(redisAddr string, redisDB, redisIdleTimeout int, apiKey string, 
 	return h, nil
 }
 
-func scribeEntriesToPublishCommand(messages []*scribe.LogEntry, sd statsd.Statsd) (*centrifugoRedisRequest, error) {
+func scribeEntriesToBroadcastCommand(messages []*scribe.LogEntry, sd statsd.Statsd) (*centrifugoRedisRequest, int64, error) {
 	var req centrifugoRedisRequest
 	req.Data = make([]centrifugoApiCommand, 0, len(messages))
+
+	var totalBroadcasts int64
 
 	for _, m := range messages {
 		msg, err := parseMessage([]byte(m.Message))
@@ -52,18 +54,24 @@ func scribeEntriesToPublishCommand(messages []*scribe.LogEntry, sd statsd.Statsd
 			continue
 		}
 
+		totalBroadcasts += int64(len(msg.Channels))
+
 		req.Data = append(req.Data, centrifugoApiCommand{
-			Method: "publish",
+			Method: "broadcast",
 			Params: *msg,
 		})
 	}
 
-	return &req, nil
+	return &req, totalBroadcasts, nil
 }
 
 func (h *Handler) Log(messages []*scribe.LogEntry) (r scribe.ResultCode, err error) {
 
-	req, err := scribeEntriesToPublishCommand(messages, h.sd)
+	if len(messages) < 1 {
+		return scribe.ResultCode_OK, nil
+	}
+
+	req, totalBroadcasts, err := scribeEntriesToBroadcastCommand(messages, h.sd)
 	if err != nil {
 		// Assume parse errors are fatal and client retry is pointless
 		return scribe.ResultCode_OK, nil
@@ -92,6 +100,7 @@ func (h *Handler) Log(messages []*scribe.LogEntry) (r scribe.ResultCode, err err
 		h.sd.Incr("error.redis_publish_fail_temp", 1)
 		return scribe.ResultCode_TRY_LATER, nil
 	}
+	h.sd.Incr("broadcasts", totalBroadcasts)
 	h.sd.Incr("published", int64(len(req.Data)))
 	h.sd.Gauge("centrifugo.api.queue_length", qSize)
 

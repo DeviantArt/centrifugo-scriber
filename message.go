@@ -35,14 +35,14 @@ type hubMessageMeta struct {
 	Data json.RawMessage `json:"data"`
 }
 
-type centrifugoPublishParams struct {
-	Channel string          `json:"channel"`
-	Data    json.RawMessage `json:"data"`
+type centrifugoBroadcastParams struct {
+	Channels []string        `json:"channels"`
+	Data     json.RawMessage `json:"data"`
 }
 
 type centrifugoApiCommand struct {
-	Method string                  `json:"method"`
-	Params centrifugoPublishParams `json:"params"`
+	Method string                    `json:"method"`
+	Params centrifugoBroadcastParams `json:"params"`
 }
 
 type centrifugoRedisRequest struct {
@@ -53,8 +53,8 @@ type centrifugoRedisRequest struct {
 // On success it return a centrifugoPublishParams struct ready to be
 // Marshalled to JSON. If there is an error parsing, or if the message TTL indicates
 // it is stale, an nil is returned and error set.
-func parseMessage(bytes []byte) (*centrifugoPublishParams, error) {
-	var msg centrifugoPublishParams
+func parseMessage(bytes []byte) (*centrifugoBroadcastParams, error) {
+	var msg centrifugoBroadcastParams
 
 	err := json.Unmarshal(bytes, &msg)
 	if err != nil {
@@ -62,7 +62,7 @@ func parseMessage(bytes []byte) (*centrifugoPublishParams, error) {
 	}
 
 	// Sanity check it since Unmarshal doesn't require all struct fields to be set
-	if len(msg.Channel) < 1 || len(msg.Data) < 1 {
+	if len(msg.Channels) < 1 || len(msg.Data) < 1 {
 		return nil, errors.New("No channel or data payload in message JSON")
 	}
 
