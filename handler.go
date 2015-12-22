@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+	"math/rand"
 	"time"
 
 	scribe "github.com/DeviantArt/centrifugo-scriber/gen-go/scribe"
@@ -13,12 +15,13 @@ import (
 
 // Handler Implements scribe.Scribe
 type Handler struct {
-	redisClient *redis.Client
-	apiKey      string
-	sd          statsd.Statsd
+	redisClient    *redis.Client
+	apiKey         string
+	sd             statsd.Statsd
+	shardedApiKeys []string
 }
 
-func NewHandler(redisAddr string, redisDB, redisIdleTimeout int, apiKey string, sd statsd.Statsd) (*Handler, error) {
+func NewHandler(redisAddr string, redisDB, redisIdleTimeout, numPubAPIShards int, apiKey string, sd statsd.Statsd) (*Handler, error) {
 	h := &Handler{
 		apiKey: apiKey,
 		sd:     sd,
@@ -32,6 +35,11 @@ func NewHandler(redisAddr string, redisDB, redisIdleTimeout int, apiKey string, 
 		IdleTimeout:  time.Duration(redisIdleTimeout) * time.Second,
 		MaxRetries:   3,
 	})
+	// Prebuild sharded API keys to avoid repeating string formatting on every request
+	for i := 0; i < numPubAPIShards; i++ {
+		key := fmt.Sprintf("%s.pub.%d", apiKey, i)
+		h.shardedApiKeys = append(h.shardedApiKeys, key)
+	}
 	return h, nil
 }
 
@@ -65,6 +73,19 @@ func scribeEntriesToBroadcastCommand(messages []*scribe.LogEntry, sd statsd.Stat
 	return &req, totalBroadcasts, nil
 }
 
+// pickQueueKey chooses a sharded queue at random if we are sharded otherwise
+// returns single default queue.
+// We could do nice sharding based on channel etc. but that breaks efficiency of broadcast
+// and Scribe transport already destroys any order guarantee we might hope to preserve
+func (h *Handler) pickQueueKey() string {
+	if len(h.shardedApiKeys) < 1 {
+		return h.apiKey
+	}
+
+	shardID := rand.Intn(len(h.shardedApiKeys))
+	return h.shardedApiKeys[shardID]
+}
+
 func (h *Handler) Log(messages []*scribe.LogEntry) (r scribe.ResultCode, err error) {
 
 	if len(messages) < 1 {
@@ -94,7 +115,8 @@ func (h *Handler) Log(messages []*scribe.LogEntry) (r scribe.ResultCode, err err
 
 	jsonStr := string(jsonBytes)
 
-	qSize, err := h.redisClient.RPush(h.apiKey, jsonStr).Result()
+	queue := h.pickQueueKey()
+	qSize, err := h.redisClient.RPush(queue, jsonStr).Result()
 	if err != nil {
 		glog.Errorf("Failed to push command to redis, downstream should retry. err: %s", err)
 		h.sd.Incr("error.redis_publish_fail_temp", 1)
@@ -102,7 +124,7 @@ func (h *Handler) Log(messages []*scribe.LogEntry) (r scribe.ResultCode, err err
 	}
 	h.sd.Incr("broadcasts", totalBroadcasts)
 	h.sd.Incr("published", int64(len(req.Data)))
-	h.sd.Gauge("centrifugo.api.queue_length", qSize)
+	h.sd.Gauge(queue+".queue_length", qSize)
 
 	return scribe.ResultCode_OK, nil
 }
