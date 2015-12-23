@@ -37,7 +37,7 @@ func NewHandler(redisAddr string, redisDB, redisIdleTimeout, numPubAPIShards int
 	})
 	// Prebuild sharded API keys to avoid repeating string formatting on every request
 	for i := 0; i < numPubAPIShards; i++ {
-		key := fmt.Sprintf("%s.pub.%d", apiKey, i)
+		key := fmt.Sprintf("%s.%d", apiKey, i)
 		h.shardedApiKeys = append(h.shardedApiKeys, key)
 	}
 	return h, nil
