@@ -58,31 +58,35 @@ go get github.com/DeviantArt/centrifugo-scriber
 
 ```
 $ ./centrifugo-scriber -h
-Usage of ./centrifugo-scriber:
+Usage of centrifugo-scriber:
   -addr string
-        The host:port to listen on (default "0.0.0.0:1463")
+    	The host:port to listen on (default "0.0.0.0:1463")
   -alsologtostderr
-        log to standard error as well as files
-  -centrifugo-api-key string
-        Which redis key the centrifugo API is looking in for publish queue (default "centrifugo.api")
+    	log to standard error as well as files
+  -centrifugo-api-key-pfx string
+    	Which redis key prefix the centrifugo API is looking in for publish queues (default "centrifugo.api")
+  -centrifugo-api-num-pub-shards int
+    	How many shards cewntrifugo is looking in for high-throughput publish queues. Default is 0 which means just use the single default API queue.
   -log_backtrace_at value
-        when logging hits line file:N, emit a stack trace (default :0)
+    	when logging hits line file:N, emit a stack trace (default :0)
   -log_dir string
-        If non-empty, write log files in this directory
+    	If non-empty, write log files in this directory
   -logtostderr
-        log to standard error instead of files
+    	log to standard error instead of files
   -redis string
-        The host:port to talk to redis on (default "localhost:6379")
+    	The host:port to talk to redis on (default "localhost:6379")
   -redis-db int
-        Which redis DB to use
+    	Which redis DB to use
+  -redis-idle-timeout timeout
+    	How many seconds a redis connection can be idle before we recycle it. If you have timeout config in your redis server config set to a non-zero value, this should be set lower. default 0
   -statsd-host string
-        hostname:port for statsd. If none given then metrics are not recorded
+    	hostname:port for statsd. If none given then metrics are not recorded
   -statsd-prefix string
-        Prefix for statsd metrics logged (default "centrifugo-scriber.")
+    	Prefix for statsd metrics logged (default "centrifugo-scriber.")
   -stderrthreshold value
-        logs at or above this threshold go to stderr
+    	logs at or above this threshold go to stderr
   -v value
-        log level for V logs
+    	log level for V logs
   -vmodule value
-        comma-separated list of pattern=N settings for file-filtered logging
+    	comma-separated list of pattern=N settings for file-filtered logging
 ```
